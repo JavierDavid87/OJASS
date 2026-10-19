@@ -1,9 +1,169 @@
-const categoryGrid=document.getElementById("categoryGrid"),workPanel=document.getElementById("workPanel"),panelTitle=document.getElementById("panelTitle"),fileGrid=document.getElementById("fileGrid"),emptyNote=document.getElementById("emptyNote");
-document.getElementById("profileImage").src=portfolioData.profileImage||"PROFILE.JPG";
-function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
-function renderCategories(){categoryGrid.innerHTML="";portfolioData.categories.forEach(c=>{const b=document.createElement("button");b.className="category";b.type="button";b.innerHTML=`<span class="cat-icon">${esc(c.icon||"▤")}</span><h3>${esc(c.title)}</h3><p>${esc(c.description||"")}</p><span class="cat-foot"><span>Open collection</span><b>${c.files.length} item${c.files.length===1?"":"s"} ↗</b></span>`;b.addEventListener("click",()=>openCategory(c.id));categoryGrid.appendChild(b);});}
-function openCategory(id){const c=portfolioData.categories.find(x=>x.id===id);if(!c)return;panelTitle.textContent=c.title;fileGrid.innerHTML="";emptyNote.hidden=c.files.length>0;c.files.forEach(f=>{const isImg=f.type==="image"||/\.(png|jpe?g|gif|webp|svg|bmp)$/i.test(f.path);const path=esc(f.path);const a=document.createElement("article");a.className="file";a.innerHTML=`<a class="preview" href="${path}" target="_blank" rel="noopener noreferrer">${isImg?`<img src="${path}" alt="${esc(f.name)}" loading="lazy">`:"▤"}</a><div class="file-info"><h4>${esc(f.name)}</h4><p>${isImg?"Image":"Document / File"}</p><a href="${path}" target="_blank" rel="noopener noreferrer" ${isImg?"":`download="${esc(f.name)}"`}>${isImg?"View image ↗":"View / Download ↗"}</a></div>`;fileGrid.appendChild(a);});workPanel.hidden=false;workPanel.scrollIntoView({behavior:"smooth",block:"start"});}
-document.getElementById("closePanel").addEventListener("click",()=>workPanel.hidden=true);
-document.getElementById("menuToggle").addEventListener("click",()=>{const links=document.getElementById("navLinks");links.classList.toggle("open");});
-document.querySelectorAll("#navLinks a").forEach(a=>a.addEventListener("click",()=>{document.getElementById("navLinks").classList.remove("open");document.querySelectorAll("#navLinks a").forEach(x=>x.classList.remove("active"));a.classList.add("active");}));
+
+/*
+  EDIT YOUR ACADEMIC WORKS IN THIS FILE.
+
+  Put your files in the matching folders, then add their paths below.
+  Example:
+  { name: "Quiz 1", path: "files/quiz/quiz-1.pdf", type: "PDF" }
+
+  No database is used.
+*/
+
+const categories = [
+    {
+        id: "quiz",
+        title: "Quiz",
+        icon: "📝",
+        description: "Quizzes and short assessments.",
+        files: [
+            // { name: "Quiz 1", path: "files/quiz/quiz-1.pdf", type: "PDF" }
+        ]
+    },
+    {
+        id: "long-quiz",
+        title: "Long Quiz",
+        icon: "📚",
+        description: "Long quizzes and assessments.",
+        files: [
+            // { name: "Long Quiz 1", path: "files/long-quiz/long-quiz-1.pdf", type: "PDF" }
+        ]
+    },
+    {
+        id: "midterms",
+        title: "Midterms",
+        icon: "📖",
+        description: "Midterm examinations and files.",
+        files: [
+            // { name: "Midterm Exam", path: "files/midterms/midterm.pdf", type: "PDF" }
+        ]
+    },
+    {
+        id: "finals",
+        title: "Finals",
+        icon: "🎓",
+        description: "Final examinations and requirements.",
+        files: [
+            // { name: "Final Exam", path: "files/finals/final-exam.pdf", type: "PDF" }
+        ]
+    },
+    {
+        id: "activities",
+        title: "Activities",
+        icon: "✏️",
+        description: "Classroom activities and exercises.",
+        files: [
+            // { name: "Activity 1", path: "files/activities/activity-1.jpg", type: "Image" }
+        ]
+    },
+    {
+        id: "projects",
+        title: "Projects",
+        icon: "💡",
+        description: "Projects and completed outputs.",
+        files: [
+            // { name: "Project 1", path: "files/projects/project-1.pdf", type: "PDF" }
+        ]
+    }
+];
+
+const categoryList = document.getElementById("category-list");
+const fileList = document.getElementById("file-list");
+const selectedTitle = document.getElementById("selected-title");
+const fileCount = document.getElementById("file-count");
+
+let selectedCategory = "quiz";
+
+function renderCategories() {
+    categoryList.innerHTML = "";
+
+    categories.forEach((category) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "category-card";
+        button.classList.toggle("active", category.id === selectedCategory);
+        button.setAttribute(
+            "aria-pressed",
+            String(category.id === selectedCategory)
+        );
+
+        const icon = document.createElement("span");
+        icon.className = "category-icon";
+        icon.textContent = category.icon;
+
+        const title = document.createElement("h3");
+        title.textContent = category.title;
+
+        const description = document.createElement("p");
+        description.textContent = category.description;
+
+        button.append(icon, title, description);
+        button.addEventListener("click", () => {
+            selectedCategory = category.id;
+            renderCategories();
+            renderFiles();
+        });
+
+        categoryList.appendChild(button);
+    });
+}
+
+function renderFiles() {
+    const category = categories.find(
+        (item) => item.id === selectedCategory
+    );
+
+    if (!category) return;
+
+    selectedTitle.textContent = category.title;
+    fileCount.textContent = `${category.files.length} item${
+        category.files.length === 1 ? "" : "s"
+    }`;
+
+    fileList.innerHTML = "";
+
+    if (category.files.length === 0) {
+        const empty = document.createElement("div");
+        empty.className = "empty-state";
+        empty.textContent =
+            "No files have been added to this category yet.";
+        fileList.appendChild(empty);
+        return;
+    }
+
+    category.files.forEach((file) => {
+        const card = document.createElement("article");
+        card.className = "file-card";
+
+        const type = document.createElement("span");
+        type.className = "file-type";
+        type.textContent = file.type || "FILE";
+
+        const title = document.createElement("h4");
+        title.textContent = file.name;
+
+        const actions = document.createElement("div");
+        actions.className = "file-actions";
+
+        const viewLink = document.createElement("a");
+        viewLink.className = "file-button";
+        viewLink.href = file.path;
+        viewLink.target = "_blank";
+        viewLink.rel = "noopener noreferrer";
+        viewLink.textContent = "View";
+
+        const downloadLink = document.createElement("a");
+        downloadLink.className = "file-button secondary";
+        downloadLink.href = file.path;
+        downloadLink.setAttribute("download", "");
+        downloadLink.textContent = "Download";
+
+        actions.append(viewLink, downloadLink);
+        card.append(type, title, actions);
+        fileList.appendChild(card);
+    });
+}
+
+document.getElementById("year").textContent = new Date().getFullYear();
+
 renderCategories();
+renderFiles();
